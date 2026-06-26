@@ -100,9 +100,19 @@ if __name__ == "__main__":
     
     if choice == "2":
         # Voice Command Mode
-        spoken_command = listen_for_command()
-        if spoken_command:
-            run_agent(spoken_command)
+        print("\nVoice Command Mode Activated. Speak your requests.")
+        print("Say 'exit', 'quit', or 'stop' to end the session.")
+        while True:
+            try:
+                spoken_command = listen_for_command()
+                if spoken_command:
+                    if spoken_command.lower().strip() in ["exit", "quit", "stop", "stop app"]:
+                        print("\nGoodbye!")
+                        break
+                    run_agent(spoken_command)
+            except KeyboardInterrupt:
+                print("\nSession ended. Goodbye!")
+                break
     else:
         # Interactive Text Chat Mode
         print("\nText Chat Mode Activated. Type your request (e.g., 'Open Chrome').")

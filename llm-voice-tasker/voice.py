@@ -10,7 +10,10 @@ def listen_for_command() -> str:
         
         # Calibration for background noise
         recognizer.adjust_for_ambient_noise(source, duration=1)
-        audio = recognizer.listen(source)
+        # Give the user more time to pause between words (default is 0.8s)
+        recognizer.pause_threshold = 3.0
+        # Listen with a timeout and phrase limit of 120 seconds (2 minutes)
+        audio = recognizer.listen(source, timeout=120, phrase_time_limit=120)
         
     try:
         print("Transcribing...")

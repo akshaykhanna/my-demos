@@ -4,9 +4,10 @@ import glob
 import webbrowser
 import urllib.parse
 
-def find_start_menu_app(app_name: str) -> str:
+def find_start_menu_app(app_name: str, app_alias: str = "") -> str:
     """Searches Windows Start Menu directories for a matching shortcut (.lnk) file."""
     app_query = app_name.lower().strip()
+    alias_query = app_alias.lower().strip() if app_alias else ""
     
     # Common Windows Start Menu paths
     user_start_menu = os.path.expandvars(r"%APPDATA%\Microsoft\Windows\Start Menu\Programs")
@@ -20,8 +21,8 @@ def find_start_menu_app(app_name: str) -> str:
             shortcuts = glob.glob(os.path.join(path, "**", "*.lnk"), recursive=True)
             for shortcut in shortcuts:
                 shortcut_name = os.path.basename(shortcut).lower()
-                # Check if the app name is in the shortcut filename (e.g., "spotify" in "spotify.lnk")
-                if app_query in shortcut_name:
+                # Check if the app name or its alias is in the shortcut filename
+                if app_query in shortcut_name or (alias_query and alias_query in shortcut_name):
                     return shortcut
     return None
 
@@ -29,8 +30,27 @@ def open_application(app_name: str) -> str:
     """Tries to launch any installed application on the system dynamically."""
     print(f"  [Tool] Dynamically searching for application: '{app_name}'")
     
-    # 1. Search Start Menu shortcuts
-    shortcut_path = find_start_menu_app(app_name)
+    app = app_name.lower().strip()
+    
+    # Common command/binary mappings on Windows
+    app_mappings = {
+        "calculator": "calc",
+        "calc": "calc",
+        "chrome": "chrome",
+        "google chrome": "chrome",
+        "notepad": "notepad",
+        "vs code": "code",
+        "vscode": "code",
+        "spotify": "spotify",
+        "paint": "mspaint",
+        "word": "winword",
+        "excel": "excel",
+    }
+    
+    cmd = app_mappings.get(app, app)
+    
+    # 1. Search Start Menu shortcuts using the app name or command alias
+    shortcut_path = find_start_menu_app(app_name, app_alias=cmd)
     if shortcut_path:
         try:
             print(f"  [Tool] Found Start Menu shortcut: '{shortcut_path}'")
@@ -39,13 +59,13 @@ def open_application(app_name: str) -> str:
         except Exception as e:
             return f"Found shortcut but failed to open: {e}"
             
-    # 2. Fallback: Try launching directly via Windows shell command
+    # 2. Fallback: Try launching directly via Windows shell command using the mapped command
     try:
-        print(f"  [Tool] Shortcut not found. Trying direct Windows shell start for '{app_name}'...")
-        subprocess.Popen(f"start {app_name}", shell=True)
+        print(f"  [Tool] Shortcut not found. Trying direct Windows shell start for '{cmd}'...")
+        subprocess.Popen(f"start {cmd}", shell=True)
         return f"Successfully executed start command for '{app_name}'."
     except Exception as e:
-        return f"Error: Application '{app_name}' is not installed, or could not be found."
+        return f"Error: Application '{app_name}' (command: '{cmd}') is not installed, or could not be found."
 
 def search_download_page(app_name: str) -> str:
     """Opens a web browser to Google to find download pages for missing applications."""
